@@ -1,6 +1,6 @@
 using Sandbox;
 
-namespace gm1.Battle;
+namespace gm1.BattleSys;
 
 public partial class Action : BaseNetworkable
 {

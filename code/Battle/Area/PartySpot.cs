@@ -3,7 +3,7 @@ using System.Linq;
 using Sandbox;
 using SandboxEditor;
 
-namespace gm1.Battle.Area;
+namespace gm1.BattleSys;
 
 public partial class PartySpot : Entity
 {
@@ -40,13 +40,13 @@ public partial class PartySpot : Entity
 }
 
 [Library( "gm1_battlearea_partyone" ), HammerEntity]
-[Title( "Battle Area Party One Spot" ), Category( "Gameplay" ), Icon( "place" )]
+[Title( "Battle Area Party One Spot" ), Category( "Gameplay" ), Icon( "place" ), EditorModel( "models/light_arrow.vmdl" )]
 [Description( "Battle area spot for Party One players" )]
 public class PartySpotOne : PartySpot
 { }
 
 [Library( "gm1_battlearea_partytwo" ), HammerEntity]
-[Title( "Battle Area Party Two Spot" ), Category( "Gameplay" ), Icon( "place" )]
+[Title( "Battle Area Party Two Spot" ), Category( "Gameplay" ), Icon( "place" ), EditorModel( "models/light_arrow.vmdl" )]
 [Description( "Battle area spot for Party Two players" )]
 public class PartySpotTwo : PartySpot
 { }

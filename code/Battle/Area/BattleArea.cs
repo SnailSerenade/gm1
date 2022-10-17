@@ -3,7 +3,7 @@ using System.Linq;
 using Sandbox;
 using SandboxEditor;
 
-namespace gm1.Battle.Area;
+namespace gm1.BattleSys;
 
 [Library( "gm1_battlearea" ), HammerEntity]
 [Title( "Battle Area Configuration" ), Category( "Gameplay" ), Icon( "place" )]

@@ -1,6 +1,6 @@
 using Sandbox;
 
-namespace gm1.Battle.Effects;
+namespace gm1.BattleSys.Effects;
 
 public partial class Heat : Effect
 {

@@ -115,6 +115,42 @@ public partial class Party : Entity, IEnumerable<PartyMember>
 		return highest + 1;
 	}
 
+	public PartyMember First()
+	{
+		int memberOrderIndex = int.MaxValue;
+		int memberIndex = -1;
+
+		for ( int i = 0; i < Members.Count; i++ )
+		{
+			PartyMember member = Members[i];
+			if ( member.OrderIndex < memberOrderIndex )
+			{
+				memberOrderIndex = member.OrderIndex;
+				memberIndex = i;
+			}
+		}
+
+		return (memberIndex == -1) ? null : Members[memberIndex];
+	}
+
+	public PartyMember Last()
+	{
+		int memberOrderIndex = int.MinValue;
+		int memberIndex = -1;
+
+		for ( int i = 0; i < Members.Count; i++ )
+		{
+			PartyMember member = Members[i];
+			if ( member.OrderIndex > memberOrderIndex )
+			{
+				memberOrderIndex = member.OrderIndex;
+				memberIndex = i;
+			}
+		}
+
+		return (memberIndex == -1) ? null : Members[memberIndex];
+	}
+
 	public int Count => Members.Count;
 	public bool Contains( Entity entity ) => Members.Where( member => member.Entity == entity ).Any();
 	public bool ContainsIndex( int orderIndex ) => Members.Where( member => member.OrderIndex == orderIndex ).Any();
