@@ -21,7 +21,9 @@ public partial class MyGame : Sandbox.Game
 {
 	public MyGame()
 	{
+		if ( Host.IsClient )
+		{
+			Local.Hud = new Sandbox.UI.RootPanel();
+		}
 	}
-
-
 }
