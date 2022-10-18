@@ -2,46 +2,27 @@ using Sandbox;
 
 namespace gm1.BattleSys;
 
-public partial class BattleMember : EntityComponent
-{
-	[Net] public Battle Battle { get; set; }
-}
-
-public partial class BattleActor : EntityComponent
-{
-	public Battle Battle
-	{
-		get
-		{
-			var component = Entity.Components.Get<BattleMember>();
-			if ( component == null )
-				return null;
-			return component.Battle;
-		}
-	}
-	[Net] public BattleSys.Action Action { get; set; } = null;
-	[Net] public Entity Target { get; set; } = null;
-	public bool Selected => Action != null && Target != null;
-}
-
 public partial class Battle : Entity
 {
 	[Net] public Party PartyOne { get; set; }
 	[Net] public Party PartyTwo { get; set; }
 
 	[Net] public Party CurrentParty { get; protected set; } = null;
+	public Party InactiveParty => (CurrentParty != PartyOne) ? PartyOne : PartyTwo;
 	[Net] public PartyMember CurrentActor { get; protected set; } = null;
 
 	[Net] public BattleArea BattleArea { get; protected set; }
 
 	public Battle( BattleArea battleArea = null, PartyMember advantage = null, Party partyOne = null, Party partyTwo = null )
 	{
+		Event.Register( this );
 		PartyOne = partyOne;
 		PartyTwo = partyTwo;
 		CurrentActor = advantage;
 		BattleArea = battleArea;
 	}
-	public Battle() { }
+	public Battle() { Event.Register( this ); }
+	~Battle() { Event.Unregister( this ); }
 
 	public void Start()
 	{
@@ -103,8 +84,18 @@ public partial class Battle : Entity
 		MovePartyToArea( PartyTwo, BattleArea.PartyTwoArea );
 
 		// Set first actor / party
-		CurrentParty = PartyOne;
+		if ( CurrentActor != null )
+		{
+			CurrentParty = !PartyOne.Contains( CurrentActor.Entity ) ? PartyOne : PartyTwo;
+		}
+		else
+		{
+			CurrentParty = PartyOne;
+		}
+
 		CurrentActor ??= CurrentParty.First();
+
+		BeginPartyTurn( CurrentParty );
 	}
 
 	protected static void MovePartyToArea( Party party, PartySpot location )
@@ -128,5 +119,63 @@ public partial class Battle : Entity
 
 			current = location.InvertOrder ? party.Previous( current ) : party.Next( current );
 		}
+	}
+
+	private void DrawPartyInfo( Party party, Vector2 position, Color color )
+	{
+		int offset = 0;
+		foreach ( var member in party )
+		{
+			DebugOverlay.ScreenText( $"{member.Entity.Name} Order:{member.OrderIndex}", position, offset++, color );
+
+			if ( member == CurrentActor )
+				DebugOverlay.ScreenText( $"  *  CurrentActor", position, offset++, color );
+
+			var battleMember = member.Entity.Components.Get<BattleMember>();
+			if ( battleMember != null )
+				DebugOverlay.ScreenText( $"  *  BattleMember", position, offset++, color );
+
+			var battleActor = member.Entity.Components.Get<BattleActor>();
+			if ( battleActor != null )
+				DebugOverlay.ScreenText( $"  -> BattleActor:{battleActor.Battle} Action:{battleActor.Action} Target:{battleActor.Target} Selected:{battleActor.Selected}", position, offset++, color );
+		}
+	}
+
+	/// <summary>
+	/// Start turn for party
+	/// </summary>
+	protected void BeginPartyTurn( Party party )
+	{
+		CurrentParty = party;
+
+		foreach ( var member in CurrentParty )
+		{
+			member.Entity.Components.RemoveAny<BattleActor>();
+
+			var component = member.Entity.Components.Create<BattleActor>();
+			component.Enemies = InactiveParty;
+		}
+	}
+
+	/// <summary>
+	/// Start turn for party
+	/// </summary>
+	protected void FinalizePartyTurn()
+	{
+		foreach ( var member in CurrentParty )
+		{
+			member.Entity.Components.RemoveAny<BattleActor>();
+		}
+	}
+
+	[Event.Tick]
+	public void Tick()
+	{
+		if ( CurrentActor == null )
+			return;
+
+		DrawPartyInfo( PartyOne, Vector2.One * 20, Color.Cyan );
+
+		DrawPartyInfo( PartyTwo, new Vector2( 250, 20 ), Color.Yellow );
 	}
 }
