@@ -10,6 +10,13 @@ public partial class Effect : EntityComponent
 	public virtual int NeutralSeverity { get; private set; } = 0;
 	public virtual int MaximumSeverity { get; private set; } = 3;
 
+	public int Neutral => NeutralSeverity;
+
+	/// <summary>
+	/// Cause of effect creation (action for example)
+	/// </summary>
+	[Net] public Action Cause { get; set; }
+
 	[Net] private int InternalSeverity { get; set; } = 0;
 	public int Severity
 	{
