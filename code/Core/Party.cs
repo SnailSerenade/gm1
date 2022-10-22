@@ -15,6 +15,8 @@ public partial class Party : Entity, IEnumerable<PartyMember>
 {
 	public List<PartyMember> Members => EntityComponent.GetAllOfType<PartyMember>().Where( member => member.Party == this ).ToList();
 
+	public Party() => Transmit = TransmitType.Always;
+
 	public void Add( Entity entity, int? orderIndex = null )
 	{
 		if ( Host.IsClient )
