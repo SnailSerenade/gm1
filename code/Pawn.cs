@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Sandbox;
 
-partial class Pawn : AnimatedEntity
+partial class Pawn : gm1.Character
 {
 	/// <summary>
 	/// Called when the entity is first created 
@@ -21,6 +21,8 @@ partial class Pawn : AnimatedEntity
 		EnableDrawing = true;
 		EnableHideInFirstPerson = true;
 		EnableShadowInFirstPerson = true;
+
+		Transmit = TransmitType.Always;
 	}
 
 	/// <summary>

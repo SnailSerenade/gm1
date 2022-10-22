@@ -7,6 +7,7 @@ namespace gm1;
 
 public partial class PartyMember : EntityComponent
 {
+	public Character Character => Entity as Character;
 	[Net] public Party Party { get; set; }
 	[Net] public int OrderIndex { get; set; }
 }
@@ -17,7 +18,7 @@ public partial class Party : Entity, IEnumerable<PartyMember>
 
 	public Party() => Transmit = TransmitType.Always;
 
-	public void Add( Entity entity, int? orderIndex = null )
+	public void Add( Character entity, int? orderIndex = null )
 	{
 		if ( Host.IsClient )
 		{
@@ -44,7 +45,7 @@ public partial class Party : Entity, IEnumerable<PartyMember>
 		entity.Components.Add( component );
 	}
 
-	public void Add( IEnumerable<Entity> entities )
+	public void Add( IEnumerable<Character> entities )
 	{
 		foreach ( var entity in entities )
 			Add( entity );
