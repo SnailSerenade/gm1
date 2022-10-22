@@ -52,7 +52,10 @@ public partial class BattleActor : EntityComponent
 		if ( battleActor == null )
 			return;
 
-		if ( battleActor.Action != null && !battleActor.Action.CheckTarget( partyMember.Entity ) )
+		if ( battleActor.LockedIn )
+			return;
+
+		if ( battleActor.Action != null && !battleActor.Action.CheckTarget( partyMember.Character ) )
 		{
 			Log.Error( "Client requested invalid target" );
 			battleActor.Target = battleActor.Target;
@@ -60,6 +63,30 @@ public partial class BattleActor : EntityComponent
 		}
 
 		battleActor.Target = partyMember;
+	}
+	[ConCmd.Server]
+	public static void AttemptLockIn()
+	{
+		var battleActor = ConsoleSystem.Caller.Pawn.Components.Get<BattleActor>();
+		if ( battleActor == null )
+			return;
+
+		battleActor.Action = new Abilities.Punch( battleActor );
+
+		if ( battleActor.Action == null )
+		{
+			Log.Error( "Client requested lock in without action" );
+			return;
+		}
+
+		if ( battleActor.Target == null )
+		{
+			Log.Error( "Client requested lock in without target" );
+			return;
+		}
+
+		battleActor.LockedIn = true;
+		battleActor.Battle.Update();
 	}
 
 	[Net] public Party Enemies { get; set; } = null;
@@ -99,6 +126,11 @@ public partial class BattleActor : EntityComponent
 				newTarget = Enemies.First();
 			Target = newTarget;
 		}
+
+		if ( Target != null && input.Pressed( InputButton.Chat ) )
+		{
+			AttemptLockIn();
+		}
 	}
 
 	[Event.Tick]
@@ -107,11 +139,19 @@ public partial class BattleActor : EntityComponent
 		if ( Target == null && Enemies != null && Host.IsServer )
 			Target = Enemies.First();
 
-		if ( Target != null && Host.IsClient )
-		{
-			if ( SelectorOverlay.Transform != null && Target.Entity.Transform != null )
-			    SelectorOverlay.Transform = Target.Entity.Transform.WithRotation( Rotation.LookAt( SelectorOverlay.Transform.Position - Local.Pawn.Position ) );
-			DebugOverlay.Text( "TARGET", Target.Entity.Position, 0, Color.Cyan );
-		}
+		if ( Host.IsServer )
+			return;
+
+		if ( Target == null || Target.Entity == null )
+			return;
+
+		if ( Entity == null )
+			return;
+
+		//if ( SelectorOverlay.Transform != null && Target.Entity.Transform != null )
+		//SelectorOverlay.Transform = Target.Entity.Transform.WithRotation( Rotation.LookAt( SelectorOverlay.Transform.Position - Local.Pawn. ) );
+		DebugOverlay.Text( "TARGET", Target.Entity.Position, 0, Color.Cyan );
+		DebugOverlay.Text( $"(of {Entity.Name})", Target.Entity.Position, 1, Color.Cyan );
+		Target.Entity.Components.Create<Sandbox.Component.Glow>();
 	}
 }
