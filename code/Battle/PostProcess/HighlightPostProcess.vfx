@@ -1,0 +1,160 @@
+HEADER
+{
+	Description = "Template Shader for S&box";
+}
+
+MODES
+{
+    Default();
+    VrForward();
+}
+
+COMMON
+{
+    #include "system.fxc"
+	#include "common.fxc"
+
+	struct PS_OUTPUT
+	{
+		float4 vColor : SV_Target0;
+	};
+
+	struct VS_INPUT
+	{
+		float3 vPositionOs : POSITION < Semantic( PosXyz ); >;
+		float2 vTexCoord : TEXCOORD0 < Semantic( LowPrecisionUv ); >;
+	};
+
+	struct PixelInput
+	{
+		float2 uv 	: TEXCOORD0;
+		float4 Position		: SV_POSITION;
+	};
+}
+
+VS
+{
+	//
+	// Main
+	//
+	PixelInput MainVs( VS_INPUT i )
+	{
+		PixelInput o;
+        o.Position = float4(i.vPositionOs.xyz, 1.0f);
+		//o.vPositionSs = float4(i.vPositionOs.xyz, 1.0f);
+        o.uv = i.vTexCoord;
+
+		return o;
+	}
+}
+
+PS
+{
+	//Blend SrcAlpha OneMinusSrcAlpha
+	RenderState( BlendEnable, true );
+    RenderState( SrcBlend, SRC_ALPHA );
+    RenderState( DstBlend, INV_SRC_ALPHA );
+
+	//Cull Off ZWrite Off ZTest Always
+    RenderState( DepthWriteEnable, false );
+    RenderState( DepthEnable, false );
+
+	CreateTexture2D( _ColorBuffer ) < Attribute( "ColorBuffer" ); SrgbRead( false ); AddressU( CLAMP ); AddressV( CLAMP ); >;
+
+	float2 SampleDirection(float2 uv, float2 direction)
+	{
+		float4 a = Tex2D(_ColorBuffer, uv + direction);
+		float4 b = Tex2D(_ColorBuffer, uv - direction);
+
+		float r = abs(a.r - b.r);
+		float g = abs(a.g - b.g);
+
+		return float2( r, g );
+	}
+
+	float4 _ColorMain < UiType( Color ); UiGroup( "Color" ); Attribute( "LineColor" ); >;
+	float4 _ColorOccluded < UiType( Color ); UiGroup( "Color" ); Attribute( "OccludeColor" ); >;
+	float _LineSize < UiType( Color ); UiGroup( "Color" ); Attribute( "LineWidth" ); Default( 0.2f ); >;
+
+	static const float _Pow = 1;
+
+	//
+	// Main
+	//
+	float4 MainPs( PixelInput i ) : SV_Target0
+	{
+		float4 c = Tex2D( _ColorBuffer, i.uv );
+		
+		float alpha = c.r;
+
+		bool inside = c.r + c.g > 0.1;
+
+		//
+		// Tweak depending on how smooth you want your lines to be
+		//
+		int SampleCount = 3;
+
+
+		float w = _LineSize / 1024.0f;
+		float h = w;
+
+		h *= g_vRenderTargetSize.x / g_vRenderTargetSize.y;
+
+		float closestOc = 8;
+		float closest = 8;
+
+		float2 accum = 0;
+
+		[loop]
+		for (int testNum = 0; testNum < 8; testNum++)
+		{
+			SampleCount = 3.0f;
+			float stageSize =  SampleCount;
+			float degree = stageSize * testNum;
+
+			[loop]
+			for (float dist = 1; dist < 8; dist++)
+			{
+				float2 a = SampleDirection( i.uv, float2(sin(g_flTime) * w * dist, cos(g_flTime) * h * dist) );
+
+				if ( inside )
+					a = 0;
+
+				if ( a.r > 0.1 && c.r <= 0 ) 
+					closest = min( closest, dist );
+
+				if ( a.g > 0 && c.g <= 0 ) 
+					closestOc = min( closestOc, dist );
+
+				accum += a;
+			}
+		}
+
+		if ( inside )
+			closest = 8;
+
+		float4 color = 0;
+
+		{
+			float strength = 1 - (closestOc / 8);
+			strength = pow( strength, _Pow );
+			color += _ColorOccluded * strength * sin(g_flTime);
+		}
+
+		{
+			float strength = 1 - (closest / 8);
+			strength = pow( strength, _Pow );
+			color += _ColorMain * strength * sin(g_flTime);
+		}
+
+		return color;
+
+		//
+		// More occlusion than not
+		//
+		if ( accum.g > accum.r )
+			return _ColorOccluded;
+
+		return _ColorMain;
+	}
+}

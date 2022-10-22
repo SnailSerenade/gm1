@@ -1,0 +1,84 @@
+HEADER
+{
+	Description = "Template Shader for S&box";
+}
+
+FEATURES
+{
+    #include "common/features.hlsl"
+}
+
+COMMON
+{
+	#define USE_CUSTOM_SHADING
+	#include "common/shared.hlsl"
+	
+}
+
+struct VertexInput
+{
+	#include "common/vertexinput.hlsl"
+};
+
+struct PixelInput
+{
+	#include "common/pixelinput.hlsl"
+};
+
+VS
+{
+	#include "common/vertex.hlsl"
+	//
+	// Main
+	//
+	PixelInput MainVs( INSTANCED_SHADER_PARAMS( VertexInput i ) )
+	{
+		PixelInput o = ProcessVertex( i );
+		return FinalizeVertex( o );
+	}
+}
+
+PS
+{
+
+	//Blend SrcAlpha OneMinusSrcAlpha
+	RenderState( BlendEnable, true );
+    RenderState( SrcBlend, SRC_ALPHA );
+    RenderState( DstBlend, INV_SRC_ALPHA );
+
+    RenderState( DepthWriteEnable, true );
+    RenderState( DepthEnable, true );
+
+	#define BLEND_MODE_ALREADY_SET
+	#define DEPTH_STATE_ALREADY_SET
+
+    #include "common/pixel.hlsl"
+
+	CreateTexture2D( _BaseOpacity ) < Attribute( "BaseOpacity" ); >;
+	CreateTexture2D( _DepthTexture ) < Attribute( "DepthTexture" ); SrgbRead( true ); Filter( POINT ); >;
+
+	//
+	// Main
+	//
+	float4 MainPs( PixelInput i ): SV_Target
+	{
+		float objectDepth = i.vPositionSs.z;
+
+		float2 screenUv = CalculateViewportUv( i.vPositionSs.xy ); 
+
+		// garry: no idea how I figured this out
+        float worldDepth = Tex2D( _DepthTexture, screenUv ).r;
+		worldDepth = RemapValClamped( worldDepth, g_flViewportMinZ, g_flViewportMaxZ, 0.0, 1.0 );
+
+		float alpha = Tex2D( _BaseOpacity, i.vTextureCoords.xy ).a;
+
+		float diff = (objectDepth - worldDepth);
+
+		if ( diff > 0.001f )
+		{
+			return float4( 0, 1, 0, alpha );
+		}
+
+		return float4( 1, 0, 0, alpha );
+	}
+}
