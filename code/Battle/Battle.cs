@@ -128,6 +128,8 @@ public partial class Battle : Entity
 		{
 			DebugOverlay.ScreenText( $"{member.Entity.Name} Order:{member.OrderIndex}", position, offset++, color );
 
+			DebugOverlay.ScreenText( $"  *  Health {member.Entity.Health}", position, offset++, color );
+
 			if ( member == CurrentActor )
 				DebugOverlay.ScreenText( $"  *  CurrentActor", position, offset++, color );
 
@@ -165,6 +167,48 @@ public partial class Battle : Entity
 		foreach ( var member in CurrentParty )
 		{
 			member.Entity.Components.RemoveAny<BattleActor>();
+		}
+	}
+
+	/// <summary>
+	/// Update state based on current information
+	/// Should be called by other components after they finish
+	/// </summary>
+	public void Update()
+	{
+		// Check if everyone on the current party has picked a target...
+		bool allPlayersLockedIn = true;
+		foreach ( var member in CurrentParty )
+		{
+			if ( !allPlayersLockedIn )
+				continue;
+
+			var battleActor = member.Entity.Components.Get<BattleActor>();
+
+			if ( battleActor == null )
+			{
+				allPlayersLockedIn = false;
+				continue;
+			}
+
+			if ( battleActor.LockedIn && battleActor.Target != null && battleActor.Action != null )
+				allPlayersLockedIn = true;
+		}
+
+		if ( allPlayersLockedIn )
+		{
+			Log.Info( $"All players in {CurrentParty} have picked a target" );
+			// run attacks
+			foreach ( var member in CurrentParty )
+			{
+				var battleActor = member.Entity.Components.Get<BattleActor>();
+
+				battleActor.Action.Perform( battleActor.Target.Character );
+			}
+
+			FinalizePartyTurn();
+
+			BeginPartyTurn( InactiveParty );
 		}
 	}
 
