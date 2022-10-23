@@ -2,7 +2,7 @@ using Sandbox;
 
 namespace gm1.BattleSys;
 
-public partial class BattleMember : EntityComponent
+public partial class BattleMember : CharacterComponent
 {
 	[Net] public Battle Battle { get; set; }
 

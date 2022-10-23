@@ -2,7 +2,7 @@ using Sandbox;
 
 namespace gm1.BattleSys;
 
-public partial class Effect : EntityComponent
+public partial class Effect : CharacterComponent
 {
 	public string Name => GetType().Name;
 
