@@ -1,0 +1,2 @@
+Based on the sbox-speed-dial implementation
+https://github.com/Eagle-One-Development/sbox-speed-dial/blob/main/code/base/ui/glyph/InputGlyph.cs
