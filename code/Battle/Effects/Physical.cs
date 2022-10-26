@@ -1,19 +1,14 @@
-using Sandbox;
+namespace gm1.Battle.Effects;
 
-namespace gm1.BattleSys.Effects;
-
-public partial class Physical : Effect
+public class Physical : Effect
 {
 	protected override void OnActivate()
 	{
-		if ( Cause == null )
-			return;
-
 		if ( Cause is not Ability ability )
 			return;
 
 		var cold = Entity.Components.Get<Cold>();
-		if ( cold != null && cold.Frozen )
+		if ( cold is { Frozen: true } )
 		{
 			cold.Severity = cold.Neutral;
 

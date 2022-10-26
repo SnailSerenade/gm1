@@ -1,5 +1,8 @@
 {
-  "cloud_packages": [],
+  "cloud_packages": [
+    "sobol.obamaprisme#7856",
+    "letdowns.spongebob#7897"
+  ],
   "game_packages": [
     "teamsnail.gm1"
   ]

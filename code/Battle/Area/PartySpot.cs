@@ -3,9 +3,9 @@ using System.Linq;
 using Sandbox;
 using SandboxEditor;
 
-namespace gm1.BattleSys;
+namespace gm1.Battle.Area;
 
-public partial class PartySpot : Entity
+public abstract partial class PartySpot : Entity
 {
 	public override void Spawn()
 	{
@@ -21,7 +21,7 @@ public partial class PartySpot : Entity
 	[Property( Title = "Battle Area" ), FGDType( "target_destination" )]
 	public string BattleAreaName { get; set; } = null;
 	public BattleArea BattleArea
-		=> All.OfType<BattleArea>().Where( ( cfg ) => cfg.Name == BattleAreaName ).FirstOrDefault();
+		=> All.OfType<BattleArea>().FirstOrDefault( cfg => cfg.Name == BattleAreaName );
 
 	/// <summary>
 	/// Spacing (in units) between actors.

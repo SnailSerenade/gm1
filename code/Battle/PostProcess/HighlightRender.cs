@@ -1,9 +1,7 @@
-using System.Collections.Generic;
 using System.Linq;
 using Sandbox;
-using Sandbox.UI;
 
-namespace gm1.BattleSys.UI;
+namespace gm1.Battle.PostProcess;
 
 /// <summary>
 /// Draws the highlight outline effect. You may know this effect from

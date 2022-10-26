@@ -1,26 +1,31 @@
+using gm1.Battle.Area;
+using gm1.Core;
 using Sandbox;
 
-namespace gm1.BattleSys;
+namespace gm1.Battle;
 
 public partial class Battle : Entity
 {
 	[Net] public Party PartyOne { get; set; }
 	[Net] public Party PartyTwo { get; set; }
 
-	[Net] public Party CurrentParty { get; protected set; } = null;
+	[Net] public Party CurrentParty { get; protected set; }
 	public Party InactiveParty => (CurrentParty != PartyOne) ? PartyOne : PartyTwo;
-	[Net] public PartyMember CurrentActor { get; protected set; } = null;
+	[Net] public PartyMember CurrentActor { get; protected set; }
 
 	[Net] public BattleArea BattleArea { get; protected set; }
 
-	public Battle( BattleArea battleArea = null, PartyMember advantage = null, Party partyOne = null, Party partyTwo = null )
+	public Battle( BattleArea battleArea = null, PartyMember advantage = null, Party partyOne = null,
+		Party partyTwo = null )
 	{
 		Event.Register( this );
+		Transmit = TransmitType.Always;
 		PartyOne = partyOne;
 		PartyTwo = partyTwo;
 		CurrentActor = advantage;
 		BattleArea = battleArea;
 	}
+
 	public Battle() { Event.Register( this ); }
 	~Battle() { Event.Unregister( this ); }
 
@@ -70,6 +75,7 @@ public partial class Battle : Entity
 		{
 			var component = member.Entity.Components.Create<BattleMember>();
 			component.Battle = this;
+			component.Enemies = PartyTwo;
 		}
 
 		// Prep party two
@@ -77,6 +83,7 @@ public partial class Battle : Entity
 		{
 			var component = member.Entity.Components.Create<BattleMember>();
 			component.Battle = this;
+			component.Enemies = PartyOne;
 		}
 
 		// Move parties to their areas
@@ -86,7 +93,7 @@ public partial class Battle : Entity
 		// Set first actor / party
 		if ( CurrentActor != null )
 		{
-			CurrentParty = !PartyOne.Contains( CurrentActor.Entity ) ? PartyOne : PartyTwo;
+			CurrentParty = !PartyOne.Contains( CurrentActor ) ? PartyOne : PartyTwo;
 		}
 		else
 		{
@@ -98,7 +105,7 @@ public partial class Battle : Entity
 		BeginPartyTurn( CurrentParty );
 	}
 
-	protected static void MovePartyToArea( Party party, PartySpot location )
+	private static void MovePartyToArea( Party party, PartySpot location )
 	{
 		PartyMember current = location.InvertOrder ? party.Last() : party.First();
 		if ( current == null )
@@ -123,7 +130,7 @@ public partial class Battle : Entity
 
 	private void DrawPartyInfo( Party party, Vector2 position, Color color )
 	{
-		int offset = 0;
+		var offset = 0;
 		foreach ( var member in party )
 		{
 			DebugOverlay.ScreenText( $"{member.Entity.Name} Order:{member.OrderIndex}", position, offset++, color );
@@ -139,30 +146,30 @@ public partial class Battle : Entity
 
 			var battleActor = member.Entity.Components.Get<BattleActor>();
 			if ( battleActor != null )
-				DebugOverlay.ScreenText( $"  -> BattleActor:{battleActor.Battle} Action:{battleActor.Action} Target:{battleActor.Target} Selected:{battleActor.Selected}", position, offset++, color );
+				DebugOverlay.ScreenText(
+					$"  -> BattleActor:{battleActor.Battle} Action:{battleActor.Action} Target:{battleActor.Target} Selected:{battleActor.Selected}",
+					position, offset++, color );
 		}
 	}
 
 	/// <summary>
 	/// Start turn for party
 	/// </summary>
-	protected void BeginPartyTurn( Party party )
+	private void BeginPartyTurn( Party party )
 	{
 		CurrentParty = party;
 
 		foreach ( var member in CurrentParty )
 		{
 			member.Entity.Components.RemoveAny<BattleActor>();
-
-			var component = member.Entity.Components.Create<BattleActor>();
-			component.Enemies = InactiveParty;
+			member.Entity.Components.Create<BattleActor>();
 		}
 	}
 
 	/// <summary>
 	/// Start turn for party
 	/// </summary>
-	protected void FinalizePartyTurn()
+	private void FinalizePartyTurn()
 	{
 		foreach ( var member in CurrentParty )
 		{
@@ -177,7 +184,7 @@ public partial class Battle : Entity
 	public void Update()
 	{
 		// Check if everyone on the current party has picked a target...
-		bool allPlayersLockedIn = true;
+		var allPlayersLockedIn = true;
 		foreach ( var member in CurrentParty )
 		{
 			if ( !allPlayersLockedIn )
@@ -191,8 +198,8 @@ public partial class Battle : Entity
 				continue;
 			}
 
-			if ( battleActor.LockedIn && battleActor.Target != null && battleActor.Action != null )
-				allPlayersLockedIn = true;
+			if ( !battleActor.LockedIn || battleActor.Target == null || battleActor.Action == null )
+				allPlayersLockedIn = false;
 		}
 
 		if ( allPlayersLockedIn )
@@ -203,7 +210,10 @@ public partial class Battle : Entity
 			{
 				var battleActor = member.Entity.Components.Get<BattleActor>();
 
-				battleActor.Action.Perform( battleActor.Target.Character );
+				var preHealth = battleActor.Target.Character.Health;
+				battleActor.Action.Perform( battleActor, battleActor.Target.Character );
+				Log.Info(
+					$"{member.Character.Name} used {battleActor.Action.Name} on {battleActor.Target.Character.Name} for {preHealth - battleActor.Target.Character.Health}hp" );
 			}
 
 			FinalizePartyTurn();

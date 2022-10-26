@@ -1,8 +1,11 @@
 using Sandbox;
 
-namespace gm1;
+namespace gm1.Core;
 
-public partial class CharacterComponent : EntityComponent
+/// <summary>
+/// Small helper to add Character to EntityComponent.
+/// </summary>
+public class CharacterComponent : EntityComponent
 {
 	public Character Character => Entity as Character;
 }

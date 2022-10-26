@@ -1,14 +1,11 @@
-namespace gm1.BattleSys.Abilities;
+namespace gm1.Battle.Abilities;
 
+[IncludeAction]
 public class Punch : Ability
 {
-	public Punch( BattleActor actor ) : base( actor )
+	public override void Perform( BattleActor actor, Core.Character target )
 	{
-	}
-
-	public override void Perform( Character target )
-	{
-		base.Perform( target );
+		base.Perform( actor, target );
 
 		target.Components.Add( new Effects.Physical() { Severity = 3 } );
 

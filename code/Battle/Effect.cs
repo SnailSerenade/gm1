@@ -1,6 +1,7 @@
+using gm1.Core;
 using Sandbox;
 
-namespace gm1.BattleSys;
+namespace gm1.Battle;
 
 public partial class Effect : CharacterComponent
 {
@@ -15,9 +16,11 @@ public partial class Effect : CharacterComponent
 	/// <summary>
 	/// Cause of effect creation (action for example)
 	/// </summary>
-	[Net] public Action Cause { get; set; }
+	[Net]
+	public Action Cause { get; init; }
 
-	[Net] private int InternalSeverity { get; set; } = 0;
+	[Net] private int InternalSeverity { get; set; }
+
 	public int Severity
 	{
 		get => InternalSeverity;
@@ -32,7 +35,7 @@ public partial class Effect : CharacterComponent
 		}
 	}
 
-	public static void UpdateSeverityFromCounterEffect( Effect target, Effect counter )
+	protected static void UpdateSeverityFromCounterEffect( Effect target, Effect counter )
 	{
 		var targetSeveritySave = target.Severity;
 		target.Severity -= counter.Severity;

@@ -3,8 +3,11 @@ using System.Linq;
 using Sandbox;
 using SandboxEditor;
 
-namespace gm1.BattleSys;
+namespace gm1.Battle.Area;
 
+/// <summary>
+/// Configuration map entity and 
+/// </summary>
 [Library( "gm1_battlearea" ), HammerEntity]
 [Title( "Battle Area Configuration" ), Category( "Gameplay" ), Icon( "place" )]
 [Description( "Battle area configuration. Needs to be referenced by other battle area entities" )]
@@ -21,8 +24,11 @@ public partial class BattleArea : Entity
 	/// <summary>
 	/// Get random BattleAreaConfig on map
 	/// </summary>
-	public static BattleArea Random => All.OfType<BattleArea>().OrderBy( x => Guid.NewGuid() ).FirstOrDefault();
+	public static BattleArea Random => All.OfType<BattleArea>().MinBy( x => Guid.NewGuid() );
 
-	public PartySpotOne PartyOneArea => All.OfType<PartySpotOne>().Where( area => area.BattleAreaName == Name ).FirstOrDefault();
-	public PartySpotTwo PartyTwoArea => All.OfType<PartySpotTwo>().Where( area => area.BattleAreaName == Name ).FirstOrDefault();
+	public PartySpotOne PartyOneArea =>
+		All.OfType<PartySpotOne>().FirstOrDefault( area => area.BattleAreaName == Name );
+
+	public PartySpotTwo PartyTwoArea =>
+		All.OfType<PartySpotTwo>().FirstOrDefault( area => area.BattleAreaName == Name );
 }

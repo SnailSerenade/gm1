@@ -1,10 +1,8 @@
 ﻿using Sandbox;
-using System;
-using System.Linq;
 
-namespace Sandbox;
+namespace gm1;
 
-partial class Pawn : gm1.Character
+partial class Pawn : Core.Character
 {
 	/// <summary>
 	/// Called when the entity is first created 
@@ -16,7 +14,8 @@ partial class Pawn : gm1.Character
 		//
 		// Use a watermelon model
 		//
-		SetModel( "models/sbox_props/watermelon/watermelon.vmdl" );
+		SetModel( "models/citizen/citizen.vmdl" );
+		EyePosition = Position + Vector3.Up * 18; // for testing
 
 		EnableDrawing = true;
 		EnableHideInFirstPerson = true;
@@ -32,8 +31,8 @@ partial class Pawn : gm1.Character
 	{
 		base.Simulate( cl );
 
-		Rotation = Input.Rotation;
-		EyeRotation = Rotation;
+		//Rotation = Input.Rotation;
+		//EyeRotation = Rotation;
 
 		// build movement from the input values
 		var movement = new Vector3( Input.Forward, Input.Left, 0 ).Normal;
@@ -73,7 +72,7 @@ partial class Pawn : gm1.Character
 		base.FrameSimulate( cl );
 
 		// Update rotation every frame, to keep things smooth
-		Rotation = Input.Rotation;
-		EyeRotation = Rotation;
+		//Rotation = Input.Rotation;
+		//EyeRotation = Rotation;
 	}
 }

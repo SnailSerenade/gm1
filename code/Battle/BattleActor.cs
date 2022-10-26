@@ -1,157 +1,78 @@
+using gm1.Core;
+using gm1.UI;
 using Sandbox;
 
-namespace gm1.BattleSys;
+namespace gm1.Battle;
 
-public partial class BattleActor : EntityComponent
+/// <summary>
+/// Component to show that the <see cref="Character"/> parent is able to pick a Target / Action in a
+/// <see cref="Battle"/>.
+/// </summary>
+public partial class BattleActor : CharacterComponent
 {
-	UI.BattleActorUi Panel;
+	private readonly ContainedComponentPanel<
+		BattleActor, UI.BattleActorActionPicker> ActionPickerUi;
 
-	UI.BattleSelectorOverlay SelectorOverlay;
-
-	public Battle Battle
+	public BattleActor()
 	{
-		get
+		if ( Host.IsClient )
 		{
-			var component = Entity.Components.Get<BattleMember>();
-			if ( component == null )
-				return null;
-			return component.Battle;
-		}
-	}
-	[Net] public bool LockedIn { get; set; } = false;
-	[Net] public Action Action { get; set; } = null;
-	[Net, Predicted] private PartyMember InternalTarget { get; set; } = null;
-	public PartyMember Target
-	{
-		get => InternalTarget;
-		set
-		{
-			InternalTarget = value;
-			if ( Host.IsClient )
-				ClientTargetToServer( value.NetworkIdent );
-		}
-	}
-	[ConCmd.Server]
-	public static void ClientTargetToServer( int entityNetworkId )
-	{
-		PartyMember partyMember = null;
-
-		foreach ( var component in EntityComponent.GetAllOfType<PartyMember>() )
-		{
-			if ( component.NetworkIdent == entityNetworkId )
-				partyMember = component;
-		}
-
-		if ( partyMember == null )
-		{
-			Log.Error( $"Couldn't find target with network ident {entityNetworkId}" );
-			return;
-		}
-
-		var battleActor = ConsoleSystem.Caller.Pawn.Components.Get<BattleActor>();
-		if ( battleActor == null )
-			return;
-
-		if ( battleActor.LockedIn )
-			return;
-
-		if ( battleActor.Action != null && !battleActor.Action.CheckTarget( partyMember.Character ) )
-		{
-			Log.Error( "Client requested invalid target" );
-			battleActor.Target = battleActor.Target;
-			return;
-		}
-
-		battleActor.Target = partyMember;
-	}
-	[ConCmd.Server]
-	public static void AttemptLockIn()
-	{
-		var battleActor = ConsoleSystem.Caller.Pawn.Components.Get<BattleActor>();
-		if ( battleActor == null )
-			return;
-
-		battleActor.Action = new Abilities.Punch( battleActor );
-
-		if ( battleActor.Action == null )
-		{
-			Log.Error( "Client requested lock in without action" );
-			return;
-		}
-
-		if ( battleActor.Target == null )
-		{
-			Log.Error( "Client requested lock in without target" );
-			return;
-		}
-
-		battleActor.LockedIn = true;
-		battleActor.Battle.Update();
-	}
-
-	[Net] public Party Enemies { get; set; } = null;
-	public bool Selected => Action != null && Target != null;
-
-	protected override void OnActivate()
-	{
-		base.OnActivate();
-
-		if ( Host.IsClient && Entity == Local.Pawn )
-		{
-			Panel = new();
-			SelectorOverlay = new();
-
-			Local.Hud.AddChild( Panel );
+			ActionPickerUi = new(this);
 		}
 	}
 
-	protected override void OnDeactivate()
-	{
-		base.OnDeactivate();
-
-		if ( Host.IsClient && Panel != null )
-		{
-			Panel.Delete();
-			SelectorOverlay.Delete();
-		}
-	}
-
-	[Event.BuildInput]
-	public void BuildInput( InputBuilder input )
-	{
-		if ( input.Pressed( InputButton.Jump ) )
-		{
-			var newTarget = Target != null ? Enemies.Next( Target ) : Enemies.First();
-			if ( newTarget == null )
-				newTarget = Enemies.First();
-			Target = newTarget;
-		}
-
-		if ( Target != null && input.Pressed( InputButton.Chat ) )
-		{
-			AttemptLockIn();
-		}
-	}
+	public Battle Battle => Entity?.Components.Get<BattleMember>()?.Battle;
+	public Party Enemies => Battle?.InactiveParty; // quick way to get enemy party!
 
 	[Event.Tick]
 	public void Tick()
 	{
-		if ( Target == null && Enemies != null && Host.IsServer )
-			Target = Enemies.First();
+		if ( Host.IsClient )
+		{
+			ActionPickerUi.Tick();
+		}
+
+		if ( Enemies != null && Host.IsServer )
+		{
+			Target ??= Enemies.First(aliveOnly: true);
+
+			if ( Host.IsServer && Entity.Client == null )
+			{
+				// Bot logic
+				// Just select random target / action for now
+				if ( Entity is Core.Character character )
+				{
+					if ( character.Actions.Count == 0 )
+						return;
+
+					Action = character.Actions[Rand.Int( character.Actions.Count - 1 )];
+
+					foreach ( var enemy in Enemies )
+					{
+						if ( Action.CheckTarget( enemy.Character ) )
+							Target = enemy;
+
+						if ( Target == null && Action.CheckTarget( Entity as Core.Character ) )
+							Target = Entity.Components.Get<Core.PartyMember>();
+					}
+				}
+
+				AttemptLockIn();
+			}
+		}
 
 		if ( Host.IsServer )
-			return;
-
-		if ( Target == null || Target.Entity == null )
 			return;
 
 		if ( Entity == null )
 			return;
 
+		if ( Target?.Entity == null )
+			return;
+
 		//if ( SelectorOverlay.Transform != null && Target.Entity.Transform != null )
 		//SelectorOverlay.Transform = Target.Entity.Transform.WithRotation( Rotation.LookAt( SelectorOverlay.Transform.Position - Local.Pawn. ) );
-		DebugOverlay.Text( "TARGET", Target.Entity.Position, 0, Color.Cyan );
+		DebugOverlay.Text( $"TARGET {Target.Entity.Name}", Target.Entity.Position, 0, Color.Cyan );
 		DebugOverlay.Text( $"(of {Entity.Name})", Target.Entity.Position, 1, Color.Cyan );
-		Target.Entity.Components.Create<Sandbox.Component.Glow>();
 	}
 }
