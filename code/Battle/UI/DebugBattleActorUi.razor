@@ -1,0 +1,277 @@
+﻿@using System
+@using System.Collections.Generic
+@using Sandbox
+@using Sandbox.UI
+@using gm1.Battle
+@using gm1.Battle.Abilities
+@using gm1.Core
+@using gm1.UI
+@using Sandbox.UI.Construct
+@using Action = gm1.Battle.Action
+
+@inherits gm1.UI.ComponentPanel<BattleActor>
+
+@namespace gm1.Battle.UI
+
+<style>
+    DebugBattleActorUi {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .container {
+        width: 30%;
+        height: 100%;
+        background-color: transparent;
+        
+        display: flex;
+        flex-direction: column;
+        
+        position: absolute;
+    }
+    
+    .choice-container {      
+        display: flex;
+        flex-direction: column;
+        padding: 7px;
+    }
+    
+    .choice {
+        background-color: #0F131A;
+        color: white;
+        font-size: 5vh;
+    }
+    
+    .choice.selected {
+        background-color: #1b1f2a;
+        border-right: 3px solid #cccccc;
+    }
+
+</style>
+
+<root>
+    <div class="container">
+        <div class="choice" style="background-color: #000000">
+            <Label @ref="HeaderLabel"></Label>
+        </div>
+        <div class="choice-container" @ref="ChoicePanel"></div>
+    </div>
+</root>
+
+@code {
+
+    private interface IChoiceData
+    {
+        public string Text { get; set; }
+        public string Class { get; set; }
+        public Panel Panel { get; set; }
+    }
+
+    private class InitialChoiceData : IChoiceData
+    {
+        public string Text { get; set; }
+        public string Class { get; set; }
+        public Panel Panel { get; set; }
+        public InitialChoiceOption Option { get; set; }
+    }
+
+    private enum InitialChoiceOption
+    {
+        Attack = 0,
+        Actions,
+        Items,
+        Run
+    }
+
+    private class ActionChoiceData : IChoiceData
+    {
+        public string Text { get; set; }
+        public string Class { get; set; }
+        public Panel Panel { get; set; }
+        public Action Action { get; set; }
+    }
+
+    private class TargetChoiceData : IChoiceData
+    {
+        public string Text { get; set; }
+        public string Class { get; set; }
+        public Panel Panel { get; set; }
+        public PartyMember Target { get; set; }
+    }
+
+    private enum CurrentPage
+    {
+        InitialOptions = 0,
+
+        ActionSelection,
+
+        TargetSelection
+    }
+
+    private Label HeaderLabel { get; set; }
+    private Panel ChoicePanel { get; set; }
+    private readonly List<IChoiceData> _choices = new();
+    private int _selectionIndex = 0;
+
+    private bool _initComplete = false;
+    private CurrentPage _page;
+
+    public DebugBattleActorUi(BattleActor battleActor) : base(battleActor)
+    {
+    }
+
+    private void SetPage(CurrentPage page)
+    {
+        _page = page;
+
+        _choices.Clear();
+
+        _selectionIndex = 0;
+        
+        HeaderLabel.Text = _page.ToString();
+
+        switch (_page)
+        {
+            case CurrentPage.InitialOptions:
+                _choices.Add(new InitialChoiceData() { Text = "Attack", Option = InitialChoiceOption.Attack });
+                _choices.Add(new InitialChoiceData() { Text = "Actions", Option = InitialChoiceOption.Actions });
+                _choices.Add(new InitialChoiceData() { Text = "Items", Option = InitialChoiceOption.Items });
+                _choices.Add(new InitialChoiceData() { Text = "Force End", Option = InitialChoiceOption.Run });
+                break;
+            case CurrentPage.ActionSelection:
+                foreach (var action in Component.Character.Actions)
+                {
+                    _choices.Add(new ActionChoiceData() { Text = action.Name, Action = action });
+                }
+                break;
+            case CurrentPage.TargetSelection:
+                foreach (var member in Component.Enemies)
+                {
+                    _choices.Add(new TargetChoiceData() { Text = member.Character.Name, Target = member });
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        ChoicePanel.DeleteChildren(true);
+
+        foreach (var choice in _choices)
+        {
+            var item = ChoicePanel.Add.Panel("choice");
+            if (choice.Text != null)
+                item.Add.Label(choice.Text);
+            if (choice.Class != null)
+                item.AddClass(choice.Class);
+            choice.Panel = item;
+        }
+
+        UpdateSelectedChoices();
+    }
+
+    private void Init()
+    {
+        SetPage(CurrentPage.InitialOptions);
+    }
+
+    private void UpdateSelectedChoices()
+    {
+        for (var i = 0; i < _choices.Count; i++)
+        {
+            var choice = _choices[i];
+
+            if (choice.Panel == null)
+                continue;
+
+            if (i == _selectionIndex)
+            {
+                choice.Panel.AddClass("selected");
+
+                if (choice is TargetChoiceData targetChoiceData)
+                {
+                    Component.Target = targetChoiceData.Target;
+                }
+            }
+            else
+                choice.Panel.RemoveClass("selected");
+        }
+    }
+
+    private void MakeInitialChoiceSelection()
+    {
+        switch (((InitialChoiceData)_choices[_selectionIndex]).Option)
+        {
+            case InitialChoiceOption.Attack:
+                Component.Action = Action.Get<Punch>();
+                SetPage(CurrentPage.TargetSelection);
+                break;
+            case InitialChoiceOption.Actions:
+                SetPage(CurrentPage.ActionSelection);
+                break;
+            case InitialChoiceOption.Items:
+                break;
+            case InitialChoiceOption.Run:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void MakeTargetSelection()
+    {
+        Component.AttemptLockIn();
+    }
+
+    [Event.BuildInput]
+    public void BuildInput(InputBuilder input)
+    {
+        if (input.Pressed(InputButton.Forward))
+        {
+            _selectionIndex--;
+            if (_selectionIndex < 0)
+                _selectionIndex = _choices.Count - 1;
+            UpdateSelectedChoices();
+        }
+
+        if (input.Pressed(InputButton.Back))
+        {
+            _selectionIndex++;
+            if (_selectionIndex >= _choices.Count)
+                _selectionIndex = 0;
+            UpdateSelectedChoices();
+        }
+
+        if (!input.Pressed(InputButton.Chat)) return;
+
+        switch (_page)
+        {
+            case CurrentPage.InitialOptions:
+                MakeInitialChoiceSelection();
+                break;
+            case CurrentPage.TargetSelection:
+                MakeTargetSelection();
+                break;
+            case CurrentPage.ActionSelection:
+                Component.Action = ((ActionChoiceData)_choices[_selectionIndex]).Action;
+                SetPage(CurrentPage.TargetSelection);
+                break;
+        }
+    }
+
+    public override void Tick()
+    {
+        base.Tick();
+
+        if (!_initComplete)
+        {
+            if (ChoicePanel == null)
+                return;
+
+            if (_choices == null)
+                return;
+
+            Init();
+            _initComplete = true;
+        }
+    }
+    } 
