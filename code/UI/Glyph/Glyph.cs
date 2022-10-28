@@ -2,7 +2,7 @@ using System;
 using Sandbox;
 using Sandbox.UI;
 
-namespace gm1.SharedUI;
+namespace gm1.UI;
 
 [UseTemplate]
 public partial class Glyph : Panel
@@ -17,7 +17,24 @@ public partial class Glyph : Panel
 		base.SetProperty( name, value );
 
 		if ( name == "input" )
-			Button = Enum.Parse<InputButton>( value, true );
+		{
+			try
+			{
+				Button = Enum.Parse<InputButton>( value, true );
+			}
+			catch ( ArgumentException )
+			{
+				// name not found, try number
+				if ( ulong.TryParse( value, out ulong number ) )
+				{
+					Button = (InputButton)number;
+				}
+				else
+				{
+					throw new ArgumentException( $"Couldn't find input glyph for {value}" );
+				}
+			}
+		}
 
 		if ( name == "size" )
 			ButtonSize = Enum.Parse<InputGlyphSize>( value, true );
