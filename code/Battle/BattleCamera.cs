@@ -98,6 +98,9 @@ public class BattleCamera : CameraMode
 			var firstEnemy = battleMember.Enemies.Last();
 			var lastEnemy = battleMember.Enemies.First();
 
+			if ( firstEnemy == null || lastEnemy == null )
+				return;
+
 			if ( firstEnemy == lastEnemy )
 			{
 				_targetReferencePoint = firstEnemy.Character.EyePosition;
