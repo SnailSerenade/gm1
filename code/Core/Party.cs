@@ -9,10 +9,10 @@ namespace gm1.Core;
 /// <summary>
 /// Component to show that the <see cref="Character"/> parent is currently a member of a <see cref="Party"/>.
 /// </summary>
-public class PartyMember : CharacterComponent
+public partial class PartyMember : CharacterComponent
 {
-	[Net] public Party Party { get; init; }
-	[Net] public int OrderIndex { get; init; }
+	[Net] public Party Party { get; set; }
+	[Net] public int OrderIndex { get; set; }
 }
 
 /// <summary>
@@ -147,7 +147,7 @@ public class Party : Entity, IEnumerable<PartyMember>
 
 		for ( int i = 0; i < Members.Count; i++ )
 		{
-			PartyMember member = Members[i];
+			var member = Members[i];
 
 			if ( aliveOnly && member.Entity is { Health: <= 0 } )
 				continue;
