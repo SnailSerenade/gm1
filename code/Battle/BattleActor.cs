@@ -62,19 +62,5 @@ public partial class BattleActor : CharacterComponent
 				AttemptLockIn();
 			}
 		}
-
-		if ( Host.IsServer )
-			return;
-
-		if ( Entity == null )
-			return;
-
-		if ( Target?.Entity == null )
-			return;
-
-		//if ( SelectorOverlay.Transform != null && Target.Entity.Transform != null )
-		//SelectorOverlay.Transform = Target.Entity.Transform.WithRotation( Rotation.LookAt( SelectorOverlay.Transform.Position - Local.Pawn. ) );
-		DebugOverlay.Text( $"TARGET {Target.Entity.Name}", Target.Entity.Position, 0, Color.Cyan );
-		DebugOverlay.Text( $"(of {Entity.Name})", Target.Entity.Position, 1, Color.Cyan );
 	}
 }
