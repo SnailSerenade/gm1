@@ -11,30 +11,32 @@ namespace gm1.Battle;
 public partial class BattleActor : CharacterComponent
 {
 	private readonly ContainedComponentPanel<
-		BattleActor, UI.BattleActorActionPicker> ActionPickerUi;
+		BattleActor, UI.DebugBattleActorUi> _debugUi;
 
 	public BattleActor()
 	{
 		if ( Host.IsClient )
 		{
-			ActionPickerUi = new(this);
+			_debugUi = new(this);
 		}
 	}
 
 	public Battle Battle => Entity?.Components.Get<BattleMember>()?.Battle;
-	public Party Enemies => Battle?.InactiveParty; // quick way to get enemy party!
+
+	public Party Enemies =>
+		Entity?.Components.Get<BattleMember>().Enemies ?? Battle?.InactiveParty; // quick way to get enemy party!
 
 	[Event.Tick]
 	public void Tick()
 	{
 		if ( Host.IsClient )
 		{
-			ActionPickerUi.Tick();
+			_debugUi.Tick();
 		}
 
 		if ( Enemies != null && Host.IsServer )
 		{
-			Target ??= Enemies.First(aliveOnly: true);
+			Target ??= Enemies.First( aliveOnly: true );
 
 			if ( Host.IsServer && Entity.Client == null )
 			{
