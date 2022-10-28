@@ -1,3 +1,4 @@
+using gm1.Battle.UI;
 using gm1.Core;
 using Sandbox;
 
@@ -41,7 +42,7 @@ public partial class BattleActor
 		set
 		{
 			InternalTarget = value;
-			if ( Host.IsClient )
+			if ( Host.IsClient && value != null )
 				ClientTargetToServer( value.Entity.NetworkIdent );
 		}
 	}
