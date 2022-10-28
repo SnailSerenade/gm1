@@ -16,7 +16,7 @@ public partial class Character : AnimatedEntity
 
 	public virtual float MaxHealth => 100.0f;
 
-	[Net] public List<string> ActionNames { get; } = new();
+	[Net] public List<string> ActionNames { get; private set; } = new();
 	public List<Action> Actions => ActionNames.Select( Action.Get ).ToList();
 
 	public override void Spawn()
