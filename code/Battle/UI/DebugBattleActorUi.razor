@@ -3,11 +3,11 @@
 @using Sandbox
 @using Sandbox.UI
 @using gm1.Battle
-@using gm1.Battle.Abilities
 @using gm1.Core
+@using gm1.Core.Abilities
 @using gm1.UI
 @using Sandbox.UI.Construct
-@using Action = gm1.Battle.Action
+@using Action = gm1.Core.Action
 
 @inherits gm1.UI.ComponentPanel<BattleActor>
 
@@ -72,7 +72,7 @@
         public string Text { get; set; }
         public string Class { get; set; }
         public Panel Panel { get; set; }
-        public InitialChoiceOption Option { get; set; }
+        public InitialChoiceOption Option { get; init; }
     }
 
     private enum InitialChoiceOption
@@ -88,7 +88,7 @@
         public string Text { get; set; }
         public string Class { get; set; }
         public Panel Panel { get; set; }
-        public Action Action { get; set; }
+        public Action Action { get; init; }
     }
 
     private class TargetChoiceData : IChoiceData
@@ -96,7 +96,7 @@
         public string Text { get; set; }
         public string Class { get; set; }
         public Panel Panel { get; set; }
-        public PartyMember Target { get; set; }
+        public PartyMember Target { get; init; }
     }
 
     private enum CurrentPage
