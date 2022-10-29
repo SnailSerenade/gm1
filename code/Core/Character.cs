@@ -28,5 +28,31 @@ public partial class Character : AnimatedEntity
 		Transmit = TransmitType.Always;
 
 		ActionNames.Add( "Punch" );
+		ActionNames.Add( "Breeze" );
+	}
+
+	/// <summary>
+	/// Inflicts an <see cref="Effect"/> on this character.
+	/// </summary>
+	/// <param name="effect">Effect to inflict</param>
+	public void Inflict<T>( T effect ) where T : Effect
+	{
+		// First get existing effect of that type
+		var existing = Components.Get<T>();
+
+		// Add new effect to run effect activation code
+		Components.Add( effect );
+
+		if ( existing == null )
+		{
+			// No existing effect, just return
+			return;
+		}
+
+		// Combine severities
+		existing.Severity += effect.Severity;
+
+		// Remove newly added effect
+		Components.Remove( effect );
 	}
 }

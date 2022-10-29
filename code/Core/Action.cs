@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using gm1.Battle;
 
-namespace gm1.Battle;
+namespace gm1.Core;
 
 public class Action
 {

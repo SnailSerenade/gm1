@@ -1,11 +1,11 @@
-using gm1.Core;
 using Sandbox;
 
-namespace gm1.Battle;
+namespace gm1.Core;
 
 public partial class Effect : CharacterComponent
 {
 	public string Name => GetType().Name;
+	public virtual string DisplayName => Name;
 
 	public virtual int MinimumSeverity { get; private set; } = 0;
 	public virtual int NeutralSeverity { get; private set; } = 0;

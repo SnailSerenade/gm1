@@ -1,4 +1,4 @@
-namespace gm1.Battle.Effects;
+namespace gm1.Core.Effects;
 
 public class Cold : Effect
 {

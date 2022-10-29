@@ -1,3 +1,4 @@
+using System.Linq;
 using gm1.Battle.Area;
 using gm1.Core;
 using Sandbox;
@@ -61,27 +62,25 @@ public partial class Battle : Entity
 		var partyTwoMembers = PartyTwo.Members;
 
 		// Validate party one
-		foreach ( var member in partyOneMembers )
-			if ( member.Entity.Components.Get<BattleMember>() != null )
-				throw new System.Exception( $"Player {member.Entity} already in a battle" );
+		foreach ( var member in
+		         partyOneMembers.Where( member => member.Entity.Components.Get<BattleMember>() != null ) )
+			throw new System.Exception( $"Player {member.Entity} already in a battle" );
 
 		// Validate party two
-		foreach ( var member in partyTwoMembers )
-			if ( member.Entity.Components.Get<BattleMember>() != null )
-				throw new System.Exception( $"Player {member.Entity} already in a battle" );
+		foreach ( var member in
+		         partyTwoMembers.Where( member => member.Entity.Components.Get<BattleMember>() != null ) )
+			throw new System.Exception( $"Player {member.Entity} already in a battle" );
 
 		// Prep party two
-		foreach ( var member in partyOneMembers )
+		foreach ( var component in partyOneMembers.Select( member => member.Entity.Components.Create<BattleMember>() ) )
 		{
-			var component = member.Entity.Components.Create<BattleMember>();
 			component.Battle = this;
 			component.Enemies = PartyTwo;
 		}
 
 		// Prep party two
-		foreach ( var member in partyTwoMembers )
+		foreach ( var component in partyTwoMembers.Select( member => member.Entity.Components.Create<BattleMember>() ) )
 		{
-			var component = member.Entity.Components.Create<BattleMember>();
 			component.Battle = this;
 			component.Enemies = PartyOne;
 		}
@@ -149,6 +148,13 @@ public partial class Battle : Entity
 				DebugOverlay.ScreenText(
 					$"  -> BattleActor:{battleActor.Battle} Action:{battleActor.Action} Target:{battleActor.Target} Selected:{battleActor.Selected}",
 					position, offset++, color );
+
+			var offset3d = 0;
+			DebugOverlay.Text( $"Health {member.Entity.Health}", member.Entity.Position, offset3d++, color );
+			foreach ( var effect in member.Entity.Components.GetAll<Core.Effect>() )
+			{
+				DebugOverlay.Text( $"{effect.Name} {effect.Severity}", member.Entity.Position, offset3d++, color );
+			}
 		}
 	}
 
