@@ -20,6 +20,7 @@ public partial class ComponentPanel<T> : Panel, IComponentPanelType<T> where T :
 {
 	public T Component { get; set; }
 	public ComponentPanel( T component ) => Component = component;
+
 	public override void Tick()
 	{
 		base.Tick();
@@ -38,6 +39,7 @@ public partial class ComponentWorldPanel<T> : WorldPanel, IComponentPanelType<T>
 {
 	public T Component { get; set; }
 	public ComponentWorldPanel( T component ) => Component = component;
+
 	public override void Tick()
 	{
 		base.Tick();
@@ -53,7 +55,8 @@ public partial class ComponentWorldPanel<T> : WorldPanel, IComponentPanelType<T>
 /// </summary>
 /// <typeparam name="TC">Component type</typeparam>
 /// <typeparam name="T1">ComponentPanel type</typeparam>
-public partial class ContainedComponentPanel<TC, T1> where TC : EntityComponent where T1 : Panel, IComponentPanelType<TC>
+public partial class ContainedComponentPanel<TC, T1>
+	where TC : EntityComponent where T1 : Panel, IComponentPanelType<TC>
 {
 	private T1 _componentPanel;
 	private readonly TC _component;
@@ -68,7 +71,7 @@ public partial class ContainedComponentPanel<TC, T1> where TC : EntityComponent 
 		var current = Local.Pawn.Components.Get<TC>();
 		if ( current == _component && _componentPanel == null )
 		{
-			_componentPanel = TypeLibrary.Create<T1>( typeof( T1 ), new object[] { _component } );
+			_componentPanel = TypeLibrary.Create<T1>( typeof(T1), new object[] { _component } );
 			if ( _componentPanel is not RootPanel )
 				Local.Hud.AddChild( _componentPanel );
 		}
