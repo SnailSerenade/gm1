@@ -7,7 +7,7 @@ public class Breeze : Ability
 	{
 		base.Perform( actor, target );
 
-		target.Inflict( new Effects.Cold() { Severity = 1 } );
+		target.Inflict( new Effects.Cold() { Severity = 1, Cause = this } );
 
 		target.Health -= 1.0f;
 	}

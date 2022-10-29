@@ -7,7 +7,7 @@ public class Punch : Ability
 	{
 		base.Perform( actor, target );
 
-		target.Inflict( new Effects.Physical() { Severity = 3 } );
+		target.Inflict( new Effects.Physical() { Severity = 3, Cause = this } );
 
 		target.Health -= 1.0f;
 	}
