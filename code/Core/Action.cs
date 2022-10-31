@@ -8,6 +8,7 @@ namespace gm1.Core;
 public class Action
 {
 	public virtual string Name => GetType().Name;
+	public virtual string DisplayName => Name;
 
 	/// <summary>
 	/// Check if provided character is allowed to be targeted by this action
