@@ -27,8 +27,11 @@ public partial class Character : AnimatedEntity
 
 		Transmit = TransmitType.Always;
 
-		ActionNames.Add( "Punch" );
-		ActionNames.Add( "Breeze" );
+		// debug (lotuspar, 2022): add all known actions for now
+		foreach ( var actionName in ActionNames )
+		{
+			ActionNames.Add( actionName );
+		}
 	}
 
 	/// <summary>
