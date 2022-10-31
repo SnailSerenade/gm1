@@ -127,7 +127,7 @@
         _choices.Clear();
 
         _selectionIndex = 0;
-        
+
         HeaderLabel.Text = _page.ToString();
 
         switch (_page)
@@ -140,15 +140,11 @@
                 break;
             case CurrentPage.ActionSelection:
                 foreach (var action in Component.Character.Actions)
-                {
-                    _choices.Add(new ActionChoiceData() { Text = action.Name, Action = action });
-                }
+                    _choices.Add(new ActionChoiceData() { Text = action.DisplayName, Action = action });
                 break;
             case CurrentPage.TargetSelection:
                 foreach (var member in Component.Enemies)
-                {
                     _choices.Add(new TargetChoiceData() { Text = member.Character.Name, Target = member });
-                }
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
