@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using gm1.Battle;
 
@@ -27,7 +28,8 @@ public class Action
 
 	public static Action Get<T>() => KnownActions.FirstOrDefault( action => action.GetType() == typeof(T) );
 	public static Action Get( string name ) => KnownActions.FirstOrDefault( action => action.Name == name );
-
+	public static ReadOnlyCollection<Action> GetAll() => KnownActions.AsReadOnly();
+	
 	public static void LoadKnownActions()
 	{
 		if ( !Sandbox.Host.IsServer && !Sandbox.Host.IsClient )
