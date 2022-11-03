@@ -8,4 +8,9 @@ namespace gm1.Core;
 public class CharacterComponent : EntityComponent
 {
 	public Character Character => Entity as Character;
+
+	public override bool CanAddToEntity( Entity entity )
+	{
+		return base.CanAddToEntity( entity ) && entity is Character;
+	}
 }
